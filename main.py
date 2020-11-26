@@ -53,7 +53,7 @@ if int(nowWeek)%2==0:
 else:
 	nowWeek='НЕЧЕТНАЯ'
 
-def sender(text):
+def sender(id, text):
 	try: 
 		session_api.messages.send(
 			key = (chat_key),
@@ -61,7 +61,8 @@ def sender(text):
 			ts=(chat_ts),
 			random_id = get_random_id(),
 			message=text,
-			chat_id = event.chat_id
+			chat_id = event.chat_id,
+			keyboard=keyboard
 		)
 	except:
 		if peer_id=='':
@@ -143,7 +144,7 @@ for event in longpoll.listen():
 			elif msg == 'инфо':
 				admin()
 				FIO(randVK)
-				sender('Расписание - выводит полное расписание на неделю\nПары - выводит пары на текущий день\nЗвонки - выводит расписание звонков\nГруппа №группы - изменить № группы\nИнфо - выводит помощь по доступным командам\nНеделя - выводит текущую неделю(ЧЕТНАЯ, НЕЧЕТНАЯ)\nЯ - выведет информацию о Вас\nОстались вопросы? Пишите: @%s(%s)'%(randVK,fullname))
+				sender(id, 'Расписание - выводит полное расписание на неделю\nПары - выводит пары на текущий день\nЗвонки - выводит расписание звонков\nГруппа №группы - изменить № группы\nИнфо - выводит помощь по доступным командам\nНеделя - выводит текущую неделю(ЧЕТНАЯ, НЕЧЕТНАЯ)\nЯ - выведет информацию о Вас\nОстались вопросы? Пишите: @%s(%s)'%(randVK,fullname))
 			elif msg=="неделя":
 				sender(id, nowWeek)
 			elif msg == "звонки":
