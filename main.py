@@ -88,7 +88,7 @@ def check_thread(id):
 
 def check_pg(id):
 	if c.execute('SELECT pg FROM Users WHERE id=%s'%id).fetchone()[0] is None:
-		return ""
+		return "?"
 	return c.execute('SELECT pg FROM Users WHERE id=%s'%id).fetchone()[0]
 
 def kick(id):
@@ -109,8 +109,7 @@ def group(group):
 	for id in ids:
 		FIO(id)
 		pd=check_pg(id)
-		if pd!='':text=text+f'{n}. @id{id}({fullname}) [{pd}]\n'
-		else:text=text+f'{n}. @id{id}({fullname})\n'
+		text=text+f'{n}. @id{id}({fullname}) [{pd}]\n'
 		n=n+1
 	sender(id, text)
 
@@ -154,12 +153,12 @@ for event in longpoll.listen():
 			elif msg == "пары":
 				group=check_group(id)
 				if group!=False:
-					spliter=f'-{nowWeek}{c.execute("SELECT pg FROM Users WHERE id=%s"%id).fetchone()[0]}'
+					spliter=f'-{nowWeek}{check_pg(id)}'
 					sender(id, str(c.execute('SELECT "%s" FROM Schedule WHERE groups="%s"'%(nowDay,group)).fetchone()).split(spliter)[1].replace("/n","\n"))
 			elif msg == "расписание":
 				group=check_group(id)
 				if group!=False:
-					spliter=f'-{nowWeek}{c.execute("SELECT pg FROM Users WHERE id=%s"%id).fetchone()[0]}'
+					spliter=f'-{nowWeek}{check_pg(id)}'
 					sender(id, str(c.execute('SELECT "all" FROM Schedule WHERE groups="%s"'%group).fetchone()).split(spliter)[1].replace("/n","\n"))
 			elif msg.split()[0] == "группа":
 				try:
