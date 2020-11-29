@@ -254,7 +254,6 @@ try:
 					group=check_group(id)
 					if group!=False:
 						week()
-						nowDay=1
 						if nowDay>5:
 							sender(id, 'Отдыхай :D Сегодня нет пар')
 						else:
