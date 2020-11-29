@@ -11,8 +11,8 @@ import pyowm
 from pyowm.commons.enums import SubscriptionTypeEnum
 from pyowm.utils.measurables import kelvin_to_celsius
 
-bd = sqlite3.connect('data.db')
-c = bd.cursor()
+database = sqlite3.connect('data.db')
+cursor = database.cursor()
 
 config = {
     'subscription_type': SubscriptionTypeEnum.FREE,
@@ -46,7 +46,7 @@ def get_but(text, color):
 	}
 
 grouplist=[]
-for group in c.execute('SELECT groups FROM Schedule').fetchall():
+for group in cursor.execute('SELECT groups FROM Schedule').fetchall():
 	grouplist.append(group[0])
 weekdays={1:'Понедельник',2:'Вторник',3:'Среда',4:'Четверг',5:'Пятница'}
 
@@ -89,96 +89,97 @@ def sender(id, text):
 
 def weather(city):
 	city.lower()
-	if nowDay == 6 or 7:
+	if nowDay>5:
 		city = city
-	elif nowDay != 6 or 7 and city == "москва":
-		city == "москва"
-	elif nowDay != 6 or 7 and city != "москва":
+	elif nowDay<=5 and city !="москва":
+		city='москва'
 		sender(id, "В будние дни, погода доступна только в городе Москва")
+	elif nowDay<=5:
+		city == "москва"
 	try:
 		if city == "питер" or city == "спб" or city == "петербург":
 			city = "санкт-петербург"
-		owm = pyowm.OWM('2a6565823dc741847bd762b19114d062', config=config)
-		mgr = owm.weather_manager()
-		observation = mgr.weather_at_place(city)
-		w = observation.weather
+		PyOwm = pyowm.OWM('2a6565823dc741847bd762b19114d062', config=config)
+		weatherManager = PyOwm.weather_manager()
+		observation = weatherManager.weather_at_place(city)
+		Weather = observation.weather
 
-		if int(w.wind()['deg']) == 0:windLine = "Западный"
-		elif int(w.wind()['deg']) == 45:windLine = "Северный"
-		elif int(w.wind()['deg']) == 90:windLine = "Восточный"
-		elif int(w.wind()['deg']) == 135:windLine = "Южный"
-		elif int(w.wind()['deg']) > 0 and int(w.wind()['deg']) < 45:windLine = "Северо-западный"
-		elif int(w.wind()['deg']) > 45 and int(w.wind()['deg']) < 90:windLine = "Северо-восточный"
-		elif int(w.wind()['deg']) > 90 and int(w.wind()['deg']) < 135:windLine = "Юго-восточный"
-		elif int(w.wind()['deg']) > 135 and int(w.wind()['deg']) != 0:windLine = "Юго-западный"
+		if int(Weather.wind()['deg']) == 0:windLine = "Западный"
+		elif int(Weather.wind()['deg']) == 45:windLine = "Северный"
+		elif int(Weather.wind()['deg']) == 90:windLine = "Восточный"
+		elif int(Weather.wind()['deg']) == 135:windLine = "Южный"
+		elif int(Weather.wind()['deg']) > 0 and int(Weather.wind()['deg']) < 45:windLine = "Северо-западный"
+		elif int(Weather.wind()['deg']) > 45 and int(Weather.wind()['deg']) < 90:windLine = "Северо-восточный"
+		elif int(Weather.wind()['deg']) > 90 and int(Weather.wind()['deg']) < 135:windLine = "Юго-восточный"
+		elif int(Weather.wind()['deg']) > 135 and int(Weather.wind()['deg']) != 0:windLine = "Юго-западный"
 
-		if w.detailed_status == "небольшой дождь":weaterStatus = "небольшой дождь 🌧"
-		elif w.detailed_status == "небольшая облачность":weaterStatus = "небольшая облачность ☁"
-		elif w.detailed_status == "пасмурно":weaterStatus = "пасмурно ☁"
-		elif w.detailed_status == "плотный туман":weaterStatus = "плотный туман 🌫"
-		elif w.detailed_status == "ясно":weaterStatus = "ясно ☀"
-		elif w.detailed_status == " облачно с прояснениями":weaterStatus = " облачно с прояснениями ⛅"
-		else: weaterStatus = w.detailed_status
+		if Weather.detailed_status == "небольшой дождь":weaterStatus = "небольшой дождь 🌧"
+		elif Weather.detailed_status == "небольшая облачность":weaterStatus = "небольшая облачность ☁"
+		elif Weather.detailed_status == "пасмурно":weaterStatus = "пасмурно ☁"
+		elif Weather.detailed_status == "плотный туман":weaterStatus = "плотный туман 🌫"
+		elif Weather.detailed_status == "ясно":weaterStatus = "ясно ☀"
+		elif Weather.detailed_status == " облачно с прояснениями":weaterStatus = " облачно с прояснениями ⛅"
+		else: weaterStatus = Weather.detailed_status
 
 		sender(id, "Погода в указанном городе: " + observation.location.name + "\n" +
 				"Погодные условия: " + weaterStatus + "\n" +
-				"💨 Ветер: " + str(w.wind()['speed']) + " м/с" + ", " + windLine + "\n" +
-				"💦 Влажность: " + str(w.humidity) + " %" + "\n" +
-				"🌡 Температура: " + str(round(kelvin_to_celsius(w.temp['temp']))) + " ℃" + " Ощущается как: " + str(
-				round(kelvin_to_celsius(w.temp['feels_like']))) + " ℃" + "\n" +
-				"🌡↑ Температура днем: " + str(round(kelvin_to_celsius(w.temp['temp_max']))) + " ℃" + "\n" +
-				"🌡↓ Температура ночью: " + str(round(kelvin_to_celsius(w.temp['temp_min']))) + " ℃")
+				"💨 Ветер: " + str(Weather.wind()['speed']) + " м/с" + ", " + windLine + "\n" +
+				"💦 Влажность: " + str(Weather.humidity) + " %" + "\n" +
+				"🌡 Температура: " + str(round(kelvin_to_celsius(Weather.temp['temp']))) + " ℃" + " Ощущается как: " + str(
+				round(kelvin_to_celsius(Weather.temp['feels_like']))) + " ℃" + "\n" +
+				"🌡↑ Температура днем: " + str(round(kelvin_to_celsius(Weather.temp['temp_max']))) + " ℃" + "\n" +
+				"🌡↓ Температура ночью: " + str(round(kelvin_to_celsius(Weather.temp['temp_min']))) + " ℃")
 	except: sender(id, "Что-то пошло не так, попробуйте еще раз.")
 
 def check_user(id):
-	if c.execute("SELECT id FROM Users WHERE id=%s"%id).fetchone() is None:
-		c.execute('INSERT INTO Users(id,state) VALUES(%d,"Студент")'%id)
-		bd.commit()
+	if cursor.execute("SELECT id FROM Users WHERE id=%s"%id).fetchone() is None:
+		cursor.execute('INSERT INTO Users(id,state) VALUES(%d,"Студент")'%id)
+		database.commit()
 
 def check_group(id):
-	if c.execute('SELECT groups FROM Users WHERE id=%s'%id).fetchone()[0] is None:
+	if cursor.execute('SELECT groups FROM Users WHERE id=%s'%id).fetchone()[0] is None:
 		sender(id, 'Необходимо указать №группы - Группа №группы.')
 		return False
-	return c.execute('SELECT groups FROM Users WHERE id=%s'%id).fetchone()[0]
+	return cursor.execute('SELECT groups FROM Users WHERE id=%s'%id).fetchone()[0]
 
 def check_thread(id):
-	if c.execute('SELECT thread FROM Users WHERE id=%s'%id).fetchone()[0] is None:
+	if cursor.execute('SELECT thread FROM Users WHERE id=%s'%id).fetchone()[0] is None:
 		return False
-	return c.execute('SELECT thread FROM Users WHERE id=%s'%id).fetchone()[0]
+	return cursor.execute('SELECT thread FROM Users WHERE id=%s'%id).fetchone()[0]
 
 def check_pg(id):
-	if c.execute('SELECT pg FROM Users WHERE id=%s'%id).fetchone()[0] is None:
+	if cursor.execute('SELECT pg FROM Users WHERE id=%s'%id).fetchone()[0] is None:
 		return "?"
-	return c.execute('SELECT pg FROM Users WHERE id=%s'%id).fetchone()[0]
+	return cursor.execute('SELECT pg FROM Users WHERE id=%s'%id).fetchone()[0]
 
 def check_state(id):
-	if c.execute('SELECT state FROM Users WHERE id=%s'%id).fetchone()[0]=='Куратор' or c.execute('SELECT state FROM Users WHERE id=%s'%id).fetchone()[0]=='Староста':
+	if cursor.execute('SELECT state FROM Users WHERE id=%s'%id).fetchone()[0]=='Куратор' or cursor.execute('SELECT state FROM Users WHERE id=%s'%id).fetchone()[0]=='Староста':
 		return True
 	return False
 
-def check_admin(iid):
+def check_admin(selected_id):
 	for ids in session_api.messages.getConversationMembers(peer_id = peer_id)["items"]:
-		if ids["member_id"] == iid:
+		if ids["member_id"] == selected_id:
 			admin = ids.get('is_admin', False)
 			if admin == True:return True
 			return False
 
-def kick(id,iid):
-	session_api.messages.removeChatUser(chat_id=event.chat_id,user_id=iid,random_id=0)
-	FIO(iid)
-	sender(id, f'@id{iid}({fullname}) был кикнут с беседы')
+def kick(id,selected_id):
+	session_api.messages.removeChatUser(chat_id=event.chat_id,user_id=selected_id,random_id=0)
+	FIO(selected_id)
+	sender(id, f'@id{selected_id}({fullname}) был кикнут с беседы')
 
-def check_student(id,iid):
-	FIO(iid)
-	if id==iid:
-		sender(id, f"{name}, твои данные:\nДолжность: {c.execute('SELECT state FROM Users WHERE id=%s'%id).fetchone()[0]}\nГруппа: {check_group(id)}\nПодгруппа: {check_pg(id)}\nПоток: {c.execute('SELECT thread FROM Users WHERE id=%s'%id).fetchone()[0]}")
+def check_student(id,selected_id):
+	FIO(selected_id)
+	if id==selected_id:
+		sender(id, f"{name}, твои данные:\nДолжность: {cursor.execute('SELECT state FROM Users WHERE id=%s'%id).fetchone()[0]}\nГруппа: {check_group(id)}\nПодгруппа: {check_pg(id)}\nПоток: {cursor.execute('SELECT thread FROM Users WHERE id=%s'%id).fetchone()[0]}")
 	else:
-		sender(id, f"Данные пользователя {fullname}:\nДолжность: {c.execute('SELECT state FROM Users WHERE id=%s'%iid).fetchone()[0]}\nГруппа: {check_group(iid)}\nПодгруппа: {check_pg(iid)}\nПоток: {c.execute('SELECT thread FROM Users WHERE id=%s'%iid).fetchone()[0]}")
+		sender(id, f"Данные пользователя {fullname}:\nДолжность: {cursor.execute('SELECT state FROM Users WHERE id=%s'%selected_id).fetchone()[0]}\nГруппа: {check_group(selected_id)}\nПодгруппа: {check_pg(selected_id)}\nПоток: {cursor.execute('SELECT thread FROM Users WHERE id=%s'%selected_id).fetchone()[0]}")
 
 def group(id):
-	group=c.execute('SELECT groups FROM Users WHERE id=%s'%id).fetchone()[0]
+	group=cursor.execute('SELECT groups FROM Users WHERE id=%s'%id).fetchone()[0]
 	ids=[]
-	for id in c.execute('SELECT id FROM Users WHERE groups="%s"'%group).fetchall():
+	for id in cursor.execute('SELECT id FROM Users WHERE groups="%s"'%group).fetchall():
 		ids.append(id[0])
 	text=''
 	n=1
@@ -195,10 +196,12 @@ def FIO(id):
 	lastname=session_api.users.get(user_ids = id)[0]['last_name']
 	fullname=f'{str(name)} {str(lastname)}'
 	city=session_api.users.get(user_ids = id, fields= "city")[0]['city']['title']
+
 try:
 	for event in longpoll.listen():
 		if event.type == VkBotEventType.MESSAGE_NEW:
 			msg=event.object.message['text'].lower()
+			print(event)
 			if msg!='':
 				peer_id=''
 				chat=session_api.groups.getLongPollServer(group_id=200587301)
@@ -229,14 +232,16 @@ try:
 						try:weather(msg.split()[1])
 						except:weather('москва')
 				elif msg == 'начать':
-					sender(id, 'Напишите: Группа №группы, для начала работы с ботом')
+					sender(id, 'Чтобы начать укажите:\nСвою группу - Группа №группы\nПодгруппу - пг №подгруппы\n\nИнфо - вывод список доступных команд')
 				elif msg == 'инфо':
 					randVK=vkDict[random.randrange(1,6)]
 					FIO(randVK)
-					#для админов беседы, куратора и старосты
-					if access==True:sender(id, 'Расписание - выводит полное расписание на неделю\nПары - выводит пары на текущий день\nЗвонки - выводит расписание звонков\nГруппа №группы - изменить № группы\nНеделя - выводит текущую неделю(ЧЕТНАЯ, НЕЧЕТНАЯ)\nСтатус - выведет информацию о Вас\nКик @id? - исключить пользователя из беседы\nСтуденты - вывести список группы\nСтудент @id? - вывести информацию о пользователе\nПогода - погода в городе\nОстались вопросы? Пишите: vk.com/%s'%randVK)
+					#для админов беседы
+					if access==True:sender(id, 'Группа - вывод доступных групп Юниор\nГруппа №группы - стать студентом группы\nСтатус - вывод информации о себе\nПогода - узнать погоду в г. Москве\nПогода город - узнать погоду в городе(доступно только в выходные дни)\nРасписание - вывод расписания на всю неделю\nПары - вывод расписания на сегодня\nЗвонки - вывод расписания звонков\nНеделя - вывод чётности недели(НЕЧЕТНАЯ, ЧЁТНАЯ)\nСтудент @id - вывод информации о студенте\nКик @id - исключить пользователя из беседы\nСтуденты - вывод всех студентов в группе\nКуратор @id - назначить пользователя куратором\nСтароста @id - назначить пользователя старостой\n\nОстались вопросы? Пишите: vk.com/%s'%randVK)
+					#для кураторов и старост
+					elif check_state(id)==True:sender(id, 'Группа - вывод доступных групп Юниор\nГруппа №группы - стать студентом группы\nСтатус - вывод информации о себе\nПогода - узнать погоду в г. Москве\nПогода город - узнать погоду в городе(доступно только в выходные дни)\nРасписание - вывод расписания на всю неделю\nПары - вывод расписания на сегодня\nЗвонки - вывод расписания звонков\nНеделя - вывод чётности недели(НЕЧЕТНАЯ, ЧЁТНАЯ)\nСтудент @id - вывод информации о студенте\nКик @id - исключить пользователя из беседы\nСтуденты - вывод всех студентов в группе\n\nОстались вопросы? Пишите: vk.com/%s'%randVK)
 					#для студентов
-					else:sender(id, 'Расписание - выводит полное расписание на неделю\nПары - выводит пары на текущий день\nЗвонки - выводит расписание звонков\nГруппа №группы - изменить № группы\nНеделя - выводит текущую неделю(ЧЕТНАЯ, НЕЧЕТНАЯ)\nСтатус - выведет информацию о Вас\nПогода - погода в городе\nОстались вопросы? Пишите: vk.com/%s'%randVK)
+					else:sender(id, 'Группа - вывод доступных групп Юниор\nГруппа №группы - стать студентом группы\nСтатус - вывод информации о себе\nПогода - узнать погоду в г. Москве\nПогода город - узнать погоду в городе(доступно только в выходные дни)\nРасписание - вывод расписания на всю неделю\nПары - вывод расписания на сегодня\nЗвонки - вывод расписания звонков\nНеделя - вывод чётности недели(НЕЧЕТНАЯ, ЧЁТНАЯ)\n\nОстались вопросы? Пишите: vk.com/%s'%randVK)
 				elif msg=="неделя":
 					sender(id, week())
 				elif msg == "звонки"or msg=='🔔 звонки':
@@ -244,7 +249,7 @@ try:
 					if group!=False:
 						thread=check_thread(id)
 						if thread!=False:
-							sender(id, c.execute('SELECT bells FROM Threads WHERE thread="%s"'%thread).fetchone()[0])
+							sender(id, cursor.execute('SELECT bells FROM Threads WHERE thread="%s"'%thread).fetchone()[0])
 						else:sender(id, 'Напишите: Группа №группы, для начала работы с ботом')
 				elif msg == "пары" or msg=='🗒 пары':
 					group=check_group(id)
@@ -256,7 +261,7 @@ try:
 						else:
 							pg=check_pg(id)
 							if pg!='?':
-								text=c.execute('SELECT "All" FROM Schedule WHERE groups="%s"'%group).fetchone()[0]
+								text=cursor.execute('SELECT "All" FROM Schedule WHERE groups="%s"'%group).fetchone()[0]
 								sender(id, f'[{group}-{pg}] Расписание на сегодня:\n{text.split(weekdays[nowDay])[1].split(f"{week()}{pg}")[1]}')
 							else:
 								sender(id, 'Необходимо указать свою подгруппу\nПг №подгруппы')
@@ -265,7 +270,7 @@ try:
 					if group!=False:
 						pg=check_pg(id)
 						if pg!='?':
-							text=c.execute('SELECT "All" FROM Schedule WHERE groups="%s"'%group).fetchone()[0]
+							text=cursor.execute('SELECT "All" FROM Schedule WHERE groups="%s"'%group).fetchone()[0]
 							n=1
 							schedule=[]
 							while n!=6:
@@ -280,13 +285,13 @@ try:
 					try:
 						for gp in grouplist:
 							if msg.split()[1]==gp.lower():
-								c.execute('UPDATE Users SET groups="%s" WHERE id=%s'%(msg.split()[1].upper(),id))
+								cursor.execute('UPDATE Users SET groups="%s" WHERE id=%s'%(msg.split()[1].upper(),id))
 								if msg.split()[1].find('исп1')>=0 or msg.split()[1].find('исп2')>=0:
 									thread=1
 								else:
 									thread=2
-								c.execute('UPDATE Users SET thread=%s WHERE id=%s'%(thread,id))
-								bd.commit()
+								cursor.execute('UPDATE Users SET thread=%s WHERE id=%s'%(thread,id))
+								database.commit()
 								sender(id, f'Теперь Вы участник группы {msg.split()[1].upper()}')
 								break
 							elif gp==grouplist[-1]:sender(id, f'Доступные группы: {", ".join(grouplist)}')
@@ -299,23 +304,23 @@ try:
 					except:sender(id, 'Не найден ID пользователя')
 				elif msg.split()[0]=='куратор' and access==True:
 					try:
-						c.execute('UPDATE Users SET state="Куратор" WHERE id=%d'%int(msg.split()[1].replace('[id',"").split('|')[0]))
-						bd.commit()
+						cursor.execute('UPDATE Users SET state="Куратор" WHERE id=%d'%int(msg.split()[1].replace('[id',"").split('|')[0]))
+						database.commit()
 						FIO(int(msg.split()[1].replace('[id',"").split('|')[0]))
 						sender(id, 'Пользователю @id%s(%s) присвоена должность "Куратор"'%(msg.split()[1].replace('[id',"").split('|')[0],fullname))
 					except:sender(id, 'Не найден ID пользователя')
 				elif msg.split()[0]=='староста' and access==True:
 					try:
-						c.execute('UPDATE Users SET state="Староста" WHERE id=%d'%int(msg.split()[1].replace('[id',"").split('|')[0]))
-						bd.commit()
+						cursor.execute('UPDATE Users SET state="Староста" WHERE id=%d'%int(msg.split()[1].replace('[id',"").split('|')[0]))
+						database.commit()
 						FIO(int(msg.split()[1].replace('[id',"").split('|')[0]))
 						sender(id, 'Пользователю @id%s(%s) присвоена должность "Староста"'%(msg.split()[1].replace('[id',"").split('|')[0],fullname))
 					except:sender(id, 'Не найден ID пользователя')
 				elif msg.split()[0]=='пг':
 					try:
 						if msg.split()[1]=="1" or msg.split()[1]=="2":
-							c.execute('UPDATE Users SET pg=%s WHERE id=%s'%(msg.split()[1],id))
-							bd.commit()
+							cursor.execute('UPDATE Users SET pg=%s WHERE id=%s'%(msg.split()[1],id))
+							database.commit()
 							sender(id, 'Вы успешно записаны в подгруппу %s'%msg.split()[1])
 						else:sender(id, 'Доступные подгруппы - 1, 2')
 					except:sender(id, 'Доступные подгруппы - 1, 2')
