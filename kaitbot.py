@@ -29,7 +29,7 @@ config = {
     }
 }
 
-my_token = 'your_token'
+my_token = 'Your_token'
 
 vk_session = vk_api.VkApi(token = my_token)
 session_api = vk_session.get_api()
@@ -201,7 +201,6 @@ try:
 	for event in longpoll.listen():
 		if event.type == VkBotEventType.MESSAGE_NEW:
 			msg=event.object.message['text'].lower()
-			print(event)
 			if msg!='':
 				peer_id=''
 				chat=session_api.groups.getLongPollServer(group_id=200587301)
