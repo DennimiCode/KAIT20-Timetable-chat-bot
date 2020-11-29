@@ -1,5 +1,5 @@
 from openpyxl import load_workbook
-import sqlite3
+import string,sqlite3,re
 
 bd=sqlite3.connect('data.db')
 c=bd.cursor()
@@ -11,46 +11,18 @@ mergeds=str(sheet.merged_cells.ranges)
 def scheduler():
 	# y - строка в таблице, с которой начинаются пары
 	# x - столбец в таблицу
-	global weekdayn
-	if weekday=='Понедельник':
-		y=12
-		weekdayn=1
-	elif weekday=='Вторник':
-		y=23
-		weekdayn=2
-	elif weekday=='Среда':
-		y=35
-		weekdayn=3
-	elif weekday=='Четверг':
-		y=46
-		weekdayn=4
-	elif weekday=='Пятница':
-		y=58
-		weekdayn=5
+	y=int(''.join(x for x in coords[group].split(',')[weekdaysn[weekday]] if x.isdigit()))
+	y=y+1
+	if y%2==0:celln=True
+	else:celln=False
 	end=y+10
-	if group=='ИСП111':x='D'
-	elif group=='ИСП131':x='F'
-	elif group=='ИСП111Д':x='H'
-	elif group=='ИСП131Д':x='J'
-	elif group=='ИСП121':x='L'
-	elif group=='ИСП211':x='N'
-	elif group=='ИСП251Д':x='P'
-	elif group=='ИСП211Д':x='R'
-	elif group=='ИСП231Д':x='T'
-	elif group=='ИСП221':x='V'
-	elif group=='ИСП241':x='X'
-	elif group=='П311':x='Z'
-	elif group=='П331':x='AB'
-	elif group=='ПВ311':x='AD'
-	elif group=='ПВ351':x='AF'
-	elif group=='П321':x='AH'
-	elif group=='П411':x='AJ'
-	elif group=='ПИВ411':x='AL'
+	x=re.sub(r'[^\w\s]+|[\d]+', r'',coords[group].split(',')[weekdaysn[weekday]]).strip()
 	schedule=[]
+	n=2
 	while y!=end:
 		try:
 			text=sheet[f'{x}{y}'].value
-			if weekdayn==1 or weekdayn==4 or weekdayn==5:
+			if celln==True:
 				if text is None:
 					if y%2>=1:
 						if mergeds.find(f'{x}{y-1}:{x}{y}')>=0:
@@ -70,8 +42,11 @@ def scheduler():
 						text=''
 			if text.find('None')>=0:
 				text.replace('None','')
-			schedule.append(text)
+			if text=='' and ((sheet[f'{x}{y+1}'].value==None and n==9) or (sheet[f'{x}{y-1}'].value==None and n==10)):pass
+			elif text=='' and ((sheet[f'{x}{y+1}'].value==None and n==7 and sheet[f'{x}{y+2}'].value==None and sheet[f'{x}{y+3}'].value==None) or (sheet[f'{x}{y-1}'].value==None and n==8 and sheet[f'{x}{y+1}'].value==None and sheet[f'{x}{y+2}'].value==None)):pass
+			else:schedule.append(text)
 		except:pass
+		n=n+1
 		y=y+1
 	n=1
 	ch=[]
@@ -133,7 +108,8 @@ def scheduler():
 			elif texts[z].find('Основы философии')>=0:texts[z]=f'{pd}Основы философии'
 			elif texts[z].find('Основы предпринимательской')>=0:texts[z]=f'{pd}Основы ПД'
 			elif texts[z].find('Разработка мобильных')>=0:texts[z]=f'{pd}Разработка моб. приложений'
-			elif texts[z].find('Технология разрабтки п')>=0:texts[z]=f'{pd}ТРПО'
+			elif texts[z].find('Технология разработки программного')>=0:texts[z]=f'{pd}ТРПО'
+			elif texts[z].find('Технология разрабтки программного')>=0:texts[z]=f'{pd}ТРПО'
 			elif texts[z].find('Экология отрасли')>=0:texts[z]=f'{pd}Экология отрасли'
 			elif texts[z].find('Сопровождение и продвижение')>=0:texts[z]=f'{pd}СиППООН'
 			elif texts[z].find('Методы создания документов')>=0:texts[z]=f'{pd}МСДпоСиОПО'
@@ -143,6 +119,8 @@ def scheduler():
 			elif texts[z].find('Основы дизайн')>=0:texts[z]=f'{pd}Основы дизайн-проектирования'
 			elif texts[z].find('Технология трехмерного')>=0:texts[z]=f'{pd}ТТМиА'
 			elif texts[z].find('Обеспечение проектной')>=0:texts[z]=f'{pd}Обеспечение проектной деят.'
+			elif texts[z].find('Безопасность жизнедеятельности')>=0:texts[z]=f'{pd}Безопасность жизнедеятельности'
+			elif texts[z].find('Разработка программных модулей')>=0:texts[z]=f'{pd}Разработка программных модулей'
 			z=z+1
 		if double==True:
 			texts[1]=f'{chn}. {texts[1]}'
@@ -182,13 +160,61 @@ def sort(weeks,pg):
 				else:
 					week[n]=text.split('[1]')[0]
 			if text.find('[2]')>=0:
-				week[n]=week[n].replace('[2] ','')	
+				week[n]=week[n].replace('[2] ','')
+		#if text.split()[0]=='5.' and len(text.split())==1:
+		#	del(week[n])	
 		n=n+1		
 	week='\n'.join(week)
 	return week
 
-grouplist=['ИСП111','ИСП131','ИСП111Д','ИСП131Д','ИСП121','ИСП211','ИСП251Д','ИСП211Д','ИСП231Д','ИСП231Д','ИСП221','ИСП241','П311','П331','ПВ311','ПВ351','П321','П411','ПИВ411']
+weekdaysn={'Понедельник':0,'Вторник':1,'Среда':2,'Четверг':3,'Пятница':4}
 weekdays=['Понедельник','Вторник','Среда','Четверг','Пятница']
+
+xs=string.ascii_uppercase
+start='D11'
+y=int(''.join(x for x in start if x.isdigit()))
+n=0
+while xs[n]!=re.sub(r'[^\w\s]+|[\d]+', r'',start).strip():
+	n=n+1
+cabsx=xs[n+1]
+j=-1
+text=1
+grouplist=[]
+coords={}
+count=0
+while count!=5:
+	if j==-1:
+		text=sheet[f'{xs[n]}{y}'].value
+	else:
+		text=sheet[f'{xs[j]}{xs[n]}{y}'].value
+	if text!='Каб' and text!=None:
+		if j==-1:
+			if count==0:coords[text.upper()]=f'{xs[n]}{y}'
+			else:coords[text.upper()]=f'{coords[text.upper()]},{xs[n]}{y}'
+		else:
+			if count==0:coords[text.upper()]=f'{xs[j]}{xs[n]}{y}'
+			else:coords[text.upper()]=f'{coords[text.upper()]},{xs[j]}{xs[n]}{y}'
+		grouplist.append(text.upper())
+	elif text is None:
+		n=0
+		while xs[n]!=re.sub(r'[^\w\s]+|[\d]+', r'',start).strip():
+			n=n+1
+		n=n-1
+		j=-1
+		y=y+1
+		while True:
+			if sheet[f'{cabsx}{y}'].value!='Каб':
+				y=y+1
+			else:break
+			if count==4:break
+		count=count+1
+	n=n+1
+	if xs[n]=='Z':
+		n=0
+		j=j+1
+group='ИСП211'
+weekday='Понедельник'
+
 for group in grouplist:
 	alls=[]
 	for weekday in weekdays:
