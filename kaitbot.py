@@ -29,7 +29,7 @@ config = {
     }
 }
 
-my_token = 'Your_token'
+my_token = 'your_token'
 
 vk_session = vk_api.VkApi(token = my_token)
 session_api = vk_session.get_api()
@@ -46,8 +46,8 @@ def get_but(text, color):
 	}
 
 grouplist=[]
-for group in cursor.execute('SELECT groups FROM Schedule').fetchall():
-	grouplist.append(group[0])
+for groups in cursor.execute('SELECT groups FROM Schedule').fetchall():
+	grouplist.append(groups[0])
 weekdays={1:'Понедельник',2:'Вторник',3:'Среда',4:'Четверг',5:'Пятница'}
 
 keyboard = {
