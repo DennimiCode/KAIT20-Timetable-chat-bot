@@ -29,7 +29,7 @@ config = {
     }
 }
 
-my_token = '2fa2b46a0a27c25145b623649a2143fb8dff601d5f4150997ed9e0d9d9ee9f1bacb0d052cf9febc97e055'
+my_token = 'your_token'
 
 vk_session = vk_api.VkApi(token = my_token)
 session_api = vk_session.get_api()
