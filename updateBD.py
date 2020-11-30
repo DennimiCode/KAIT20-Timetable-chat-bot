@@ -187,8 +187,8 @@ while count!=5:
 		text=sheet[f'{xs[j]}{xs[n]}{y}'].value
 	if text!='Каб' and text!=None:
 		while text[1] in 'ABCDEFGHIJKLMNOPRTUQVWXYZ':
-			if text[1] in 'ABCDEFGHIJKLMNOPRTUQVWXYZ':
-				text=sheet[text.split('=')[1]].value
+			text=sheet[text.split('=')[1]].value
+		print(text)
 		if j==-1:
 			if count==0:coords[text.upper()]=f'{xs[n]}{y}'
 			else:coords[text.upper()]=f'{coords[text.upper()]},{xs[n]}{y}'
