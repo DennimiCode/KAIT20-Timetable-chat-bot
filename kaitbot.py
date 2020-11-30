@@ -10,11 +10,12 @@ import json
 import pyowm
 from pyowm.commons.enums import SubscriptionTypeEnum
 from pyowm.utils.measurables import kelvin_to_celsius
+from tokens import Your_VKToken, Your_WeatherToken
 
 database = sqlite3.connect('data.db')
 cursor = database.cursor()
 
-my_token = 'Your_VKtoken'
+my_token = Your_VKToken
 
 vk_session = vk_api.VkApi(token = my_token)
 session_api = vk_session.get_api()
@@ -55,10 +56,10 @@ def week():
 	month = now.month
 	day = now.day
 	weekNum = datetime.date(year, month, day).isocalendar()[1]
+	#не менять Ё
 	if weekNum % 2 == 0: 
-		return "ЧЕТНАЯ"
-	else:
-		return "НЕЧЕТНАЯ"
+		return "ЧЁТНАЯ"
+	return "НЕЧЕТНАЯ"
 
 def sender(id, text):
 	try:
@@ -103,7 +104,7 @@ def weather(city):
 	try:
 		if city == "питер" or city == "спб" or city == "петербург":
 			city = "санкт-петербург"
-		PyOwm = pyowm.OWM('Your_WeatherToken', config=config)
+		PyOwm = pyowm.OWM(Your_WeatherToken, config=config)
 		weatherManager = PyOwm.weather_manager()
 		observation = weatherManager.weather_at_place(city)
 		Weather = observation.weather
