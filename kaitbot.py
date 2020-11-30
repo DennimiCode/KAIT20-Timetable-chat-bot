@@ -10,14 +10,13 @@ import json
 import pyowm
 from pyowm.commons.enums import SubscriptionTypeEnum
 from pyowm.utils.measurables import kelvin_to_celsius
-from tokens import Your_VKToken, Your_WeatherToken
 
 database = sqlite3.connect('data.db')
 cursor = database.cursor()
 
 my_token = Your_VKToken
 
-vk_session = vk_api.VkApi(token = my_token)
+vk_session = vk_api.VkApi(token = 'Your_VKToken')
 session_api = vk_session.get_api()
 longpoll = VkBotLongPoll(vk_session, '200587301')
 
@@ -104,7 +103,7 @@ def weather(city):
 	try:
 		if city == "питер" or city == "спб" or city == "петербург":
 			city = "санкт-петербург"
-		PyOwm = pyowm.OWM(Your_WeatherToken, config=config)
+		PyOwm = pyowm.OWM('Your_WeatherToken', config=config)
 		weatherManager = PyOwm.weather_manager()
 		observation = weatherManager.weather_at_place(city)
 		Weather = observation.weather
