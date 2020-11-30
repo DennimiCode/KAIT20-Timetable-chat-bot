@@ -14,9 +14,9 @@ from pyowm.utils.measurables import kelvin_to_celsius
 database = sqlite3.connect('data.db')
 cursor = database.cursor()
 
-my_token = Your_VKToken
+my_token = 'Your_VKToken'
 
-vk_session = vk_api.VkApi(token = 'Your_VKToken')
+vk_session = vk_api.VkApi(token = my_token)
 session_api = vk_session.get_api()
 longpoll = VkBotLongPoll(vk_session, '200587301')
 
