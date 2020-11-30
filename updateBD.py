@@ -5,7 +5,7 @@ bd=sqlite3.connect('data.db')
 c=bd.cursor()
 
 wb = load_workbook('Data/Junior.xlsx')
-sheet = wb['Page 1']
+sheet = wb.worksheets[0]
 mergeds=str(sheet.merged_cells.ranges)
 
 def scheduler():
@@ -23,7 +23,7 @@ def scheduler():
 		try:
 			text=sheet[f'{x}{y}'].value
 			if celln==True:
-				if text is None:
+				if text is None or text=='':
 					if y%2>=1:
 						if mergeds.find(f'{x}{y-1}:{x}{y}')>=0:
 							text=sheet[f'{x}{y-1}'].value
@@ -32,7 +32,7 @@ def scheduler():
 					else:
 						text=''
 			else:
-				if text is None:
+				if text is None or text=='':
 					if y%2==0:
 						if mergeds.find(f'{x}{y-1}:{x}{y}')>=0:
 							text=sheet[f'{x}{y-1}'].value
@@ -40,8 +40,8 @@ def scheduler():
 							text=''
 					else:
 						text=''
-			if text.find('None')>=0:
-				text.replace('None','')
+			if text is None:
+				text=''
 			if text=='' and ((sheet[f'{x}{y+1}'].value==None and n==9) or (sheet[f'{x}{y-1}'].value==None and n==10)):pass
 			elif text=='' and ((sheet[f'{x}{y+1}'].value==None and n==7 and sheet[f'{x}{y+2}'].value==None and sheet[f'{x}{y+3}'].value==None) or (sheet[f'{x}{y-1}'].value==None and n==8 and sheet[f'{x}{y+1}'].value==None and sheet[f'{x}{y+2}'].value==None)):pass
 			else:schedule.append(text)
@@ -96,7 +96,7 @@ def scheduler():
 			elif texts[z].find('Индивидуальный проект')>=0:texts[z]=f'{pd}Индивидуальный проект'
 			elif texts[z].find('Дискретная математика')>=0:texts[z]=f'{pd}Дискретная математика с ЭМЛ'			
 			elif texts[z].find('Элементы')>=0:texts[z]=f'{pd}Элементы высшей математики'
-			elif texts[z].find('баз данных')>=0:texts[z]=f'{pd}Основы проектирования БД'
+			elif texts[z].find('проектирования баз данных')>=0:texts[z]=f'{pd}Основы проектирования БД'
 			elif texts[z].find('Информационные')>=0:texts[z]=f'{pd}Информационные технологии'
 			elif texts[z].find('алгоритмизации')>=0:texts[z]=f'{pd}ОА и программирования'
 			elif texts[z].find('Психология')>=0:texts[z]=f'{pd}Психология и общение'
@@ -113,7 +113,7 @@ def scheduler():
 			elif texts[z].find('Экология отрасли')>=0:texts[z]=f'{pd}Экология отрасли'
 			elif texts[z].find('Сопровождение и продвижение')>=0:texts[z]=f'{pd}СиППООН'
 			elif texts[z].find('Методы создания документов')>=0:texts[z]=f'{pd}МСДпоСиОПО'
-			elif texts[z].find('Технология разрабтки и защиты')>=0:texts[z]=f'{pd}ТРиЗБД'
+			elif texts[z].find('Технология разработки и защиты')>=0:texts[z]=f'{pd}ТРиЗБД'
 			elif texts[z].find('Документационное')>=0:texts[z]=f'{pd}ДОУ'
 			elif texts[z].find('Менеджмент')>=0:texts[z]=f'{pd}Менеджмент'
 			elif texts[z].find('Основы дизайн')>=0:texts[z]=f'{pd}Основы дизайн-проектирования'
@@ -161,8 +161,6 @@ def sort(weeks,pg):
 					week[n]=text.split('[1]')[0]
 			if text.find('[2]')>=0:
 				week[n]=week[n].replace('[2] ','')
-		#if text.split()[0]=='5.' and len(text.split())==1:
-		#	del(week[n])	
 		n=n+1		
 	week='\n'.join(week)
 	return week
@@ -171,7 +169,7 @@ weekdaysn={'Понедельник':0,'Вторник':1,'Среда':2,'Чет�
 weekdays=['Понедельник','Вторник','Среда','Четверг','Пятница']
 
 xs=string.ascii_uppercase
-start='D11'
+start='E9'
 y=int(''.join(x for x in start if x.isdigit()))
 n=0
 while xs[n]!=re.sub(r'[^\w\s]+|[\d]+', r'',start).strip():
@@ -188,6 +186,9 @@ while count!=5:
 	else:
 		text=sheet[f'{xs[j]}{xs[n]}{y}'].value
 	if text!='Каб' and text!=None:
+		while text[1] in 'ABCDEFGHIJKLMNOPRTUQVWXYZ':
+			if text[1] in 'ABCDEFGHIJKLMNOPRTUQVWXYZ':
+				text=sheet[text.split('=')[1]].value
 		if j==-1:
 			if count==0:coords[text.upper()]=f'{xs[n]}{y}'
 			else:coords[text.upper()]=f'{coords[text.upper()]},{xs[n]}{y}'
@@ -208,13 +209,11 @@ while count!=5:
 			else:break
 			if count==4:break
 		count=count+1
-	n=n+1
 	if xs[n]=='Z':
-		n=0
+		n=-1
 		j=j+1
-group='ИСП211'
-weekday='Понедельник'
-
+	n=n+1
+#основной цикл приложения(запись данных в БД)	
 for group in grouplist:
 	alls=[]
 	for weekday in weekdays:
