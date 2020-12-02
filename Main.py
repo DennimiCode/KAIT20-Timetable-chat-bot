@@ -9,76 +9,112 @@ import requests
 import json
 from tokens import Your_VKToken
 from kaitbot import KaitBot
+import time
+import asyncio
 
-database = sqlite3.connect('data.db')
-cursor = database.cursor()
+class Kait:
 
-my_token = Your_VKToken
+	def __init__(self):
+		self.vk_session = vk_api.VkApi(token = Your_VKToken)
+		self.session_api = self.vk_session.get_api()
+		self.longpoll = VkBotLongPoll(self.vk_session, '200587301')
 
-vk_session = vk_api.VkApi(token = my_token)
-session_api = vk_session.get_api()
-longpoll = VkBotLongPoll(vk_session, '200587301')
+		keyboard = {
+			"one_time": True,
+			"buttons": [
+				[self.get_but('🗓 Расписание', 'default'), self.get_but('🗒 Пары', 'default')],
+				[self.get_but('🔔 Звонки', 'default'), self.get_but('🌡 Погода', 'default')]
+			]
+		}
+		self.keyboard = str(json.dumps(keyboard, ensure_ascii=False).encode('utf-8').decode('utf-8'))
+		asyncio.run(self.main())
 
-def get_but(text, color):
-	return {
-		"action": {
-			"type": "text",
-			"payload": "{\"button\": \"" + "1" + "\"}",
-			"label": f"{text}"
-		},
-		"color": f"{color}"
-	}
 
-keyboard = {
-	"one_time": True,
-	"buttons": [
-		[get_but('🗓 Расписание', 'default'), get_but('🗒 Пары', 'default')],
-		[get_but('🔔 Звонки', 'default'), get_but('🌡 Погода', 'default')]
-	]
-}
-keyboard = str(json.dumps(keyboard, ensure_ascii=False).encode('utf-8').decode('utf-8'))
+	async def main(self):
+		task1 = asyncio.create_task(self.check_events())
+		task2 = asyncio.create_task(self.check_notifications())
 
-def follow_message(id, text):
-	try:
-		session_api.messages.send(
-			key = chatSettings['chat_key'],
-			server = chatSettings['chat_server'],
-			ts = chatSettings['chat_ts'],
-			message = text,
-			chat_id = event.chat_id,
-			random_id = get_random_id(),
-			keyboard = keyboard
-		)
-	except:
-		if peer_id == id: session_api.messages.send(peer_id = peer_id,message = text,random_id = 0, keyboard = keyboard)
-		else: vk_session.method('messages.send', {'user_id' : id, 'message' : text, 'random_id' : 0, 'keyboard': keyboard})
+		await asyncio.gather(task1,task2)
 
-chatSettings={}
+	async def check_notifications(self):
+		timer=time.time()-100
+		while True:
+			now = time.time()
+			if (now-timer>=60):
+				Bot = KaitBot(None,None,None,None)
+				result=Bot.notifications(self.vk_session)
+				if result==True: timer=time.time()
+				else: timer=time.time()-40
+			await asyncio.sleep(0.1)
 
-for event in longpoll.listen():
-	try:
-		if event.type == VkBotEventType.MESSAGE_NEW:
-			msg = event.object.message['text'].lower()
-			if msg != '':
-				chat = session_api.groups.getLongPollServer(group_id=200587301)
-				chatSettings['chat_key'] = chat['key']
-				chatSettings['chat_server'] = chat['server']
-				chatSettings['chat_ts'] = chat['ts']
-				chatSettings['chat_id'] = event.chat_id
-				peer_id = event.object.message['peer_id']
-				id = event.object.message['from_id']
+	async def check_events(self):
+		chat = self.session_api.groups.getLongPollServer(group_id=200587301)
+		ready_events=[]
+		while True:
+			for event in requests.get('{}?act=a_check&key={}&ts={}&mode=2&version=2'.format(chat['server'],chat['key'],chat['ts'])).json()['updates']:
+				if not event in ready_events: 
+					if event['type'] == 'message_new':
+						self.new_message_event(event)
+					ready_events.append(event)
+				if len(ready_events)>25:
+					chat = self.session_api.groups.getLongPollServer(group_id=200587301)
+					ready_events=[]
+			await asyncio.sleep(0.1)
 
-				bot = KaitBot(id,session_api,peer_id,chatSettings['chat_id'])
+	def follow_message(self,text):
+		if not self.chat_id is None:
+			self.session_api.messages.send(
+				message = text,
+				chat_id = self.chat_id,
+				random_id = get_random_id(),
+				keyboard = self.keyboard
+			)
+		elif self.peer_id == id: 
+			self.session_api.messages.send(
+				peer_id = self.peer_id,
+				message = text,
+				random_id = 0, 
+				keyboard = self.keyboard
+			)
+		else: 
+			self.vk_session.method(
+				'messages.send', 
+				{'user_id' : self.user_id, 
+				'message' : text, 
+				'random_id' : 0, 
+				'keyboard': self.keyboard}
+			)
 
-				if msg.find("[club") >= 0:
-					msg = msg.split()
-					del(msg[0])
-					msg=' '.join(msg)
-				if msg.find('🔔')>=0 or msg.find('🗒')>=0 or msg.find('🗓')>=0 or msg.find('🌡')>=0:
-					msg=msg.split()[1]
+	def new_message_event(self,event):
+		self.user_id = event['object']['message']['from_id']
+		self.peer_id = event['object']['message']['peer_id']
+		msg = event['object']['message']['text'].lower()
 
-				answer=bot.new_message(msg)
-				if answer!=False:
-					follow_message(id, answer)
+		if str(self.peer_id)[0]=='2': self.chat_id = self.peer_id - 2000000000
+		else: self.chat_id = None
 
-	except Exception as e:print(e)
+		Bot = KaitBot(self.user_id,self.session_api,self.peer_id,self.chat_id)
+
+		#Убираем лишние символы, приводя сообщение к доступному виду
+		if msg.find("[club") >= 0:
+			msg = msg.split()
+			del(msg[0])
+			msg=' '.join(msg)
+		if msg.find('🔔')>=0 or msg.find('🗒')>=0 or msg.find('🗓')>=0 or msg.find('🌡')>=0:
+			msg=msg.split()[1]
+
+		answer=Bot.new_message(msg)
+		if answer!=False:
+			self.follow_message(answer)
+
+	def get_but(self,text,color):
+		return {
+			"action": {
+				"type": "text",
+				"payload": "{\"button\": \"" + "1" + "\"}",
+				"label": f"{text}"
+			},
+			"color": f"{color}"
+		}
+
+Kait()
