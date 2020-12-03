@@ -52,16 +52,16 @@ class Kait:
 		ready_events=[]
 		while True:
 			now=time.time()
-			#try:
-			for event in requests.get('{}?act=a_check&key={}&ts={}&mode=2&version=2'.format(chat['server'],chat['key'],chat['ts'])).json()['updates']:
-				if not event in ready_events: 
-					if event['type'] == 'message_new':
-						self.new_message_event(event)
-					ready_events.append(event)
-				if len(ready_events)>100:
-					chat = self.session_api.groups.getLongPollServer(group_id=200587301)
-					ready_events=[]
-			#except:ready_events.append(event)
+			try:
+				for event in requests.get('{}?act=a_check&key={}&ts={}&mode=2&version=2'.format(chat['server'],chat['key'],chat['ts'])).json()['updates']:
+					if not event in ready_events: 
+						if event['type'] == 'message_new':
+							self.new_message_event(event)
+						ready_events.append(event)
+					if len(ready_events)>100:
+						chat = self.session_api.groups.getLongPollServer(group_id=200587301)
+						ready_events=[]
+			except:ready_events.append(event)
 			await asyncio.sleep(0.1)
 
 	def follow_message(self,text):
