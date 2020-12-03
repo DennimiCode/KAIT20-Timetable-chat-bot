@@ -41,8 +41,8 @@ class Kait:
 		while True:
 			now = time.time()
 			if (now-timer>=60):
-				Bot = KaitBot(None,None,None,None)
-				result=Bot.notifications(self.vk_session)
+				Bot = KaitBot(None,self.session_api,None,None)
+				result=Bot.notifications()
 				if result==True: timer=time.time()
 				else: timer=time.time()-40
 			await asyncio.sleep(0.1)
@@ -51,38 +51,33 @@ class Kait:
 		chat = self.session_api.groups.getLongPollServer(group_id=200587301)
 		ready_events=[]
 		while True:
+			now=time.time()
+			#try:
 			for event in requests.get('{}?act=a_check&key={}&ts={}&mode=2&version=2'.format(chat['server'],chat['key'],chat['ts'])).json()['updates']:
 				if not event in ready_events: 
 					if event['type'] == 'message_new':
 						self.new_message_event(event)
 					ready_events.append(event)
-				if len(ready_events)>25:
+				if len(ready_events)>100:
 					chat = self.session_api.groups.getLongPollServer(group_id=200587301)
 					ready_events=[]
+			#except:ready_events.append(event)
 			await asyncio.sleep(0.1)
 
 	def follow_message(self,text):
-		if not self.chat_id is None:
+		try:
 			self.session_api.messages.send(
+				chat_id = self.peer_id,
 				message = text,
-				chat_id = self.chat_id,
-				random_id = get_random_id(),
+				random_id = get_random_id(), 
 				keyboard = self.keyboard
 			)
-		elif self.peer_id == id: 
+		except:
 			self.session_api.messages.send(
 				peer_id = self.peer_id,
 				message = text,
-				random_id = 0, 
+				random_id = get_random_id(), 
 				keyboard = self.keyboard
-			)
-		else: 
-			self.vk_session.method(
-				'messages.send', 
-				{'user_id' : self.user_id, 
-				'message' : text, 
-				'random_id' : 0, 
-				'keyboard': self.keyboard}
 			)
 
 	def new_message_event(self,event):
@@ -90,10 +85,9 @@ class Kait:
 		self.peer_id = event['object']['message']['peer_id']
 		msg = event['object']['message']['text'].lower()
 
-		if str(self.peer_id)[0]=='2': self.chat_id = self.peer_id - 2000000000
-		else: self.chat_id = None
+		if str(self.peer_id)[0]=='2': self.peer_id = self.peer_id - 2000000000
 
-		Bot = KaitBot(self.user_id,self.session_api,self.peer_id,self.chat_id)
+		Bot = KaitBot(self.user_id,self.vk_session,self.session_api,self.peer_id)
 
 		#Убираем лишние символы, приводя сообщение к доступному виду
 		if msg.find("[club") >= 0:
