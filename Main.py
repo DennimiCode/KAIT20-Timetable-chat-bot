@@ -33,7 +33,6 @@ class Kait:
 	async def main(self):
 		task1 = asyncio.create_task(self.check_events())
 		task2 = asyncio.create_task(self.check_notifications())
-
 		await asyncio.gather(task1,task2)
 
 	async def check_notifications(self):
@@ -41,7 +40,7 @@ class Kait:
 		while True:
 			now = time.time()
 			if (now-timer>=60):
-				Bot = KaitBot(None,self.session_api,None,None)
+				Bot = KaitBot(None,self.session_api,None)
 				result=Bot.notifications()
 				if result==True: timer=time.time()
 				else: timer=time.time()-40
@@ -50,18 +49,21 @@ class Kait:
 	async def check_events(self):
 		chat = self.session_api.groups.getLongPollServer(group_id=200587301)
 		ready_events=[]
+		timer1=time.time()
 		while True:
 			now=time.time()
 			try:
 				for event in requests.get('{}?act=a_check&key={}&ts={}&mode=2&version=2'.format(chat['server'],chat['key'],chat['ts'])).json()['updates']:
 					if not event in ready_events: 
-						if event['type'] == 'message_new':
-							self.new_message_event(event)
-						ready_events.append(event)
+						try:
+							if event['type'] == 'message_new':
+								self.new_message_event(event)
+							ready_events.append(event)
+						except:ready_events.append(event)
 					if len(ready_events)>100:
-						chat = self.session_api.groups.getLongPollServer(group_id=200587301)
+						chat = self.vk_sessionn_api.groups.getLongPollServer(group_id=200587301)
 						ready_events=[]
-			except:ready_events.append(event)
+			except:chat = self.session_api.groups.getLongPollServer(group_id=200587301)
 			await asyncio.sleep(0.1)
 
 	def follow_message(self,text):
@@ -87,15 +89,15 @@ class Kait:
 
 		if str(self.peer_id)[0]=='2': self.peer_id = self.peer_id - 2000000000
 
-		Bot = KaitBot(self.user_id,self.vk_session,self.session_api,self.peer_id)
+		Bot = KaitBot(self.user_id,self.session_api,self.peer_id)
 
 		#Убираем лишние символы, приводя сообщение к доступному виду
 		if msg.find("[club") >= 0:
 			msg = msg.split()
-			del(msg[0])
+			msg[0]='каит'
 			msg=' '.join(msg)
 		if msg.find('🔔')>=0 or msg.find('🗒')>=0 or msg.find('🗓')>=0 or msg.find('🌡')>=0:
-			msg=msg.split()[1]
+			msg=msg.replace(f'{msg.split()[1]} ','')
 
 		answer=Bot.new_message(msg)
 		if answer!=False:

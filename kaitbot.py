@@ -31,9 +31,8 @@ config = {
 
 class KaitBot:
 
-	def __init__(self,user_id,vk_session,session_api,peer_id):
+	def __init__(self,user_id,session_api,peer_id):
 		self.user_id = user_id
-		self.vk_session = vk_session
 		self.session_api = session_api
 		self.peer_id = peer_id
 		self.commands = ['начать', 'статус', 'инфо', 'неделя', 'погода', 'звонки', 'пары', 
@@ -313,8 +312,18 @@ class KaitBot:
 			n=1
 			while n!=6:
 				try:
-					bell=bells[0].split('\n')[n].split(f'пара -> ')[1].split("-")[0]
+					bell=bells[0].split('\n')[n].split(f'пара -> ')[1].split("-")[0].split(':')
 				except:pass
+				bell[1]=int(bell[1])-5
+				if bell[1]<0:
+					bell[1]=60+bell[1]
+					bell[0]=str(int(bell[0])-1)
+				bell[1]=str(bell[1])
+				if len(bell[1])==1:
+					bell[1]=f'0{bell[1]}'
+				if len(bell[0])==1:
+					bell[0]=f'0{bell[0]}'	
+				bell=':'.join(bell)
 				if bell == currentTime:
 					result=True
 					for user_id in cursor.execute('SELECT id FROM Users WHERE notify="True"').fetchall():
@@ -329,8 +338,7 @@ class KaitBot:
 
 	def send_notification(self,user_id,text):
 		self.session_api.messages.send(
-			peer_id = self.peer_id,
+			peer_id = user_id,
 			message = text,
 			random_id = 0, 
-			keyboard = self.keyboard
 		)
