@@ -246,25 +246,27 @@ class KaitBot:
 
 	def set_notify_politics(self,turn):
 		self.get_fullname(self.user_id)
-		if (cursor.execute('SELECT notify FROM Users WHERE id=%s'%self.user_id).fetchone()[0] == 'True' and turn in {'вкл','включить'}) or (cursor.execute('SELECT notify FROM Users WHERE id=%s'%self.user_id).fetchone()[0] == 'False' and turn in {'выкл','выключить'}):
-			if turn in {'вкл','включить'}: text = 'включены'
-			else: text = 'выключены'
-			return f'{self.selected_username}, уведомления уже {text}'
-		if turn in {'вкл','включить'}:
-			cursor.execute('UPDATE Users SET notify="True" WHERE id=%s'%self.user_id)
-			text = 'включены'
-		elif turn in {'выкл','выключить'}:
-			cursor.execute('UPDATE Users SET notify="False" WHERE id=%s'%self.user_id)
-			text = 'выключены'
-		else:
-			if cursor.execute('SELECT notify FROM Users WHERE id=%s'%self.user_id).fetchone()[0] == 'True':
+		if self.check_group(self.user_id)!='не указана' and self.check_subgroup(self.user_id)!='не указана':
+			if (cursor.execute('SELECT notify FROM Users WHERE id=%s'%self.user_id).fetchone()[0] == 'True' and turn in {'вкл','включить'}) or (cursor.execute('SELECT notify FROM Users WHERE id=%s'%self.user_id).fetchone()[0] == 'False' and turn in {'выкл','выключить'}):
+				if turn in {'вкл','включить'}: text = 'включены'
+				else: text = 'выключены'
+				return f'{self.selected_username}, уведомления уже {text}'
+			if turn in {'вкл','включить'}:
+				cursor.execute('UPDATE Users SET notify="True" WHERE id=%s'%self.user_id)
+				text = 'включены'
+			elif turn in {'выкл','выключить'}:
 				cursor.execute('UPDATE Users SET notify="False" WHERE id=%s'%self.user_id)
 				text = 'выключены'
 			else:
-				cursor.execute('UPDATE Users SET notify="True" WHERE id=%s'%self.user_id)
-				text = 'включены'
-		database.commit()
-		return f'{self.selected_username}, уведомления {text}'
+				if cursor.execute('SELECT notify FROM Users WHERE id=%s'%self.user_id).fetchone()[0] == 'True':
+					cursor.execute('UPDATE Users SET notify="False" WHERE id=%s'%self.user_id)
+					text = 'выключены'
+				else:
+					cursor.execute('UPDATE Users SET notify="True" WHERE id=%s'%self.user_id)
+					text = 'включены'
+			database.commit()
+			return f'{self.selected_username}, уведомления {text}'
+		else: return f'Обязательно к заполнению:\n1. Группа - Группа №группы\n2. Подгруппа - пг №подгруппы\n\nИнфо - вывод список доступных команд'
 
 	def add_group(self,group):
 		if group == self.check_group(self.user_id):
